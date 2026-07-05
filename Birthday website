@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting for Faguniya's Birthday...</title>
+    <!-- Tailwind CSS for utility styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HIGHLY STYLISH PRESTIGE FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Parisienne&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    
+    <!-- Three.js for 3D Floating Hearts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GSAP for complex programmatic animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
+        
+        body {
+            font-family: 'Satoshi', sans-serif;
+            background-color: #080707;
+            overflow: hidden;
+            letter-spacing: 0.03em;
+        }
+
+        .font-prestige { font-family: 'Cinzel Decorative', serif; }
+        .font-editorial { font-family: 'Playfair Display', serif; }
+        .font-signature { font-family: 'Parisienne', cursive; }
+
+        /* Layer 1: Animated Aurora Background */
+        .aurora-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; background: #080707;
+        }
+
+        .aurora-layer {
+            position: absolute; width: 150%; height: 150%; top: -25%; left: -25%;
+            background: 
+                radial-gradient(circle at 15% 25%, hsla(333, 75%, 50%, 0.25) 0%, transparent 45%),
+                radial-gradient(circle at 85% 15%, hsla(275, 80%, 55%, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 85%, hsla(345, 85%, 45%, 0.15) 0%, transparent 40%);
+            filter: blur(80px);
+            animation: aurora-move 25s ease-in-out infinite alternate;
+        }
+
+        @keyframes aurora-move {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            100% { transform: translate(4%, -4%) rotate(-4deg) scale(0.92); }
+        }
+
+        #webgl-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1; pointer-events: none;
+        }
+
+        .glass-card {
+            background: rgba(15, 12, 12, 0.45);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.7);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #ffffff 30%, #f472b6 70%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .highlight-gradient {
+            background: linear-gradient(135deg, #ff8da1, #ff3366);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Interactive Envelope Setup */
+        .envelope-wrapper { perspective: 1000px; cursor: pointer; }
+        .envelope {
+            position: relative; background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            transition: transform 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+            transform-style: preserve-3d;
+        }
+        .envelope:hover {
+            transform: scale(1.05) translateY(-4px);
+            border-color: rgba(244, 114, 182, 0.3);
+        }
+        .envelope-flap {
+            position: absolute; top: 0; left: 0; right: 0; height: 0;
+            border-left: 140px solid transparent; border-right: 140px solid transparent;
+            border-top: 100px solid rgba(255, 255, 255, 0.09);
+            transform-origin: top; transition: transform 0.5s ease; z-index: 4;
+        }
+        @media (max-width: 640px) {
+            .envelope-flap { border-left-width: 112px; border-right-width: 112px; border-top-width: 80px; }
+        }
+        
+        .heart-pulse { animation: pulse 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1); }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(236,72,153,0.3)); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 15px rgba(236,72,153,0.7)); }
+        }
+    </style>
+</head>
+<body class="text-stone-300 min-h-screen flex items-center justify-center p-4 selection:bg-pink-600 selection:text-white">
+
+    <!-- Background Layers -->
+    <div class="aurora-bg"><div class="aurora-layer"></div></div>
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- PAGE 1: EXCLUSIVE COUNTDOWN SCREEN -->
+    <section id="page-1" class="relative z-10 w-full max-w-xl mx-auto flex flex-col items-center justify-center space-y-8">
+        <div id="countdown-card" class="glass-card w-full rounded-3xl p-6 md:p-8 text-center opacity-0 scale-95">
+            <h2 class="font-prestige text-pink-400/80 text-[10px] md:text-xs uppercase tracking-[0.25em] mb-2">Counting Down For Faguniya</h2>
+            <h1 class="font-editorial text-3xl md:text-4xl font-light italic text-gradient mb-8">The Special Day Is Coming...</h1>
+            
+            <div class="grid grid-cols-4 gap-3 max-w-md mx-auto mb-8">
+                <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-3 backdrop-blur-sm">
+                    <span id="days" class="block text-2xl md:text-4xl font-light font-editorial text-white tracking-wide">00</span>
+                    <span class="text-[9px] text-stone-400 uppercase tracking-[0.15em] font-medium block mt-1">Days</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-3 backdrop-blur-sm">
+                    <span id="hours" class="block text-2xl md:text-4xl font-light font-editorial text-white tracking-wide">00</span>
+                    <span class="text-[9px] text-stone-400 uppercase tracking-[0.15em] font-medium block mt-1">Hours</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-3 backdrop-blur-sm">
+                    <span id="minutes" class="block text-2xl md:text-4xl font-light font-editorial text-white tracking-wide">00</span>
+                    <span class="text-[9px] text-stone-400 uppercase tracking-[0.15em] font-medium block mt-1">Mins</span>
+                </div>
+                <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-3 backdrop-blur-sm">
+                    <span id="seconds" class="block text-2xl md:text-4xl font-bold font-editorial text-pink-500 tracking-wide">00</span>
+                    <span class="text-[9px] text-pink-400/80 uppercase tracking-[0.15em] font-bold block mt-1">Secs</span>
+                </div>
+            </div>
+
+            <!-- Sleek Action Button to transition to Page 2 -->
+            <button onclick="navigateToPage2()" class="group relative px-6 py-3 rounded-full bg-white/5 border border-white/10 hover:border-pink-500/50 transition-all duration-300 text-xs uppercase tracking-[0.2em] font-medium text-stone-200 hover:text-white overflow-hidden">
+                <span class="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                View Her Letter &rarr;
+            </button>
+        </div>
+    </section>
+
+    <!-- PAGE 2: ENVELOPE & LETTER CONTAINER (HIDDEN INITIALLY) -->
+    <section id="page-2" class="relative z-10 w-full max-w-2xl mx-auto flex-col items-center justify-center space-y-10 hidden opacity-0 min-h-screen py-12 overflow-y-auto">
+        
+        <!-- Interactive Envelope Trigger -->
+        <div id="envelope-area" class="w-full flex flex-col items-center justify-center py-4">
+            <p id="click-hint" class="font-prestige text-[10px] text-stone-400 uppercase tracking-[0.2em] mb-6 animate-pulse">✨ Click the heart to open your letter ✨</p>
+            
+            <div class="envelope-wrapper w-56 h-40 sm:w-72 sm:h-48" onclick="openLetter()">
+                <div id="main-envelope" class="envelope w-full h-full rounded-2xl flex items-center justify-center shadow-2xl">
+                    <div id="flap" class="envelope-flap"></div>
+                    <div class="text-4xl z-10 heart-pulse filter drop-shadow-md">💌</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Actual Secret Letter Sheet -->
+        <div id="letter-card" class="glass-card w-full rounded-3xl p-8 md:p-12 relative hidden opacity-0 transform translate-y-12">
+            <div class="absolute top-6 left-6 text-pink-500/15 text-xl font-prestige">⚜</div>
+            <div class="absolute bottom-6 right-6 text-pink-500/15 text-xl font-prestige">⚜</div>
+            
+            <div class="max-w-none space-y-6 text-stone-300 text-base md:text-lg leading-relaxed tracking-wide text-justify font-light">
+                <p class="font-editorial text-2xl md:text-3xl text-pink-400 font-normal italic text-left">Dear Faguniya,</p>
+                
+                <p>
+                    Apka birthday jald hi aa rha h I hope mujhse jyada aap exited hoge agar nahi ho to ho jao kyuki ye mere liye bohot spacial day hai kyuki humari friendship ko <span class="text-white font-semibold border-b border-pink-500/40 pb-0.5 px-1 bg-white/[0.02]">1 year</span> ho gya h...
+                </p>
+                
+                <p>
+                    & me chahta hu ki bs is birthday pe hi nhi apke aane wale sabhi birthday pe jese last year khus the wese hi khus raho apko khus dekh kr apne aap mere face pe smile aa jati h.
+                </p>
+                
+                <div class="text-right pt-6 space-y-1">
+                    <p class="font-signature text-5xl text-pink-300 block tracking-normal transform scale-105 origin-right">
+                        So advance me happy birthday..... Love you ❣️ 
+                    </p>
+                    <p class="font-prestige text-[10px] uppercase tracking-[0.25em] text-stone-400 pr-1">
+                        Meri pyaari Faguniya
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signature Closing Message -->
+        <div id="signature-note" class="pt-2 text-center opacity-0 transform translate-y-6 w-full">
+            <h2 class="font-editorial text-3xl md:text-5xl font-light italic leading-tight tracking-wide text-stone-200">
+                Mujhe abhi bhi <br class="md:hidden">
+                <span class="highlight-gradient font-prestige font-bold not-italic text-2xl md:text-4xl tracking-wider px-2">'U'</span> hi chahiye. ❤️
+            </h2>
+        </div>
+
+    </section>
+
+    <script>
+        // --- 1. INITIAL ENTRY ANIMATIONS ---
+        window.addEventListener('DOMContentLoaded', () => {
+            gsap.to("#countdown-card", { opacity: 1, scale: 1, duration: 1.2, ease: "power4.out" });
+        });
+
+        // --- 2. MULTI-PAGE TRANSITION LOGIC ---
+        function navigateToPage2() {
+            gsap.to("#page-1", { 
+                opacity: 0, 
+                scale: 0.95, 
+                duration: 0.8, 
+                ease: "power4.in",
+                onComplete: () => {
+                    document.getElementById("page-1").style.display = "none";
+                    const page2 = document.getElementById("page-2");
+                    page2.classList.remove("hidden");
+                    page2.classList.add("flex");
+                    document.body.style.overflowY = "auto"; 
+
+                    gsap.to("#page-2", { opacity: 1, duration: 0.8, ease: "power4.out" });
+                }
+            });
+        }
+
+        // --- 3. ENVELOPE OPENING MECHANICS ---
+        let isOpened = false;
+        function openLetter() {
+            if (isOpened) return;
+            isOpened = true;
+
+            const tl = gsap.timeline();
+
+            tl.to("#click-hint", { opacity: 0, y: -10, duration: 0.3 })
+              .to("#flap", { transformOrigin: "top", rotationX: 180, duration: 0.6, ease: "power1.inOut" })
+              .to("#main-envelope", { scale: 0.8, y: 40, opacity: 0, duration: 0.5, ease: "power2.in" }, "-=0.1")
+              .call(() => {
+                  document.getElementById("envelope-area").style.display = "none";
+                  const letter = document.getElementById("letter-card");
+                  letter.classList.remove("hidden");
+              })
+              .to("#letter-card", { opacity: 1, y: 0, duration: 1.4, ease: "cubic-bezier(0.25, 1, 0.5, 1)" })
+              .to("#signature-note", { opacity: 1, y: 0, duration: 1, ease: "power3.out" }, "-=0.5");
+        }
+
+        // --- 4. DATA ENGINE: REALTIME COUNTDOWN ---
+        const currentYear = new Date().getFullYear();
+        let targetDate = new Date(`July 31, ${currentYear} 00:00:00`).getTime();
+        if (new Date().getTime() > targetDate) {
+            targetDate = new Date(`July 31, ${currentYear + 1} 00:00:00`).getTime();
+        }
+
+        setInterval(() => {
+            const now = new Date().getTime();
+            const difference = targetDate - now;
+            if (difference <= 0) return;
+
+            const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerText = d < 10 ? "0" + d : d;
+            document.getElementById("hours").innerText = h < 10 ? "0" + h : h;
+            document.getElementById("minutes").innerText = m < 10 ? "0" + m : m;
+            document.getElementById("seconds").innerText = s < 10 ? "0" + s : s;
+        }, 1000);
+
+        // --- 5. VISUAL GRAPHICS: 3D AMBIENT HEARTS ---
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const heartShape = new THREE.Shape();
+        heartShape.moveTo(25, 25);
+        heartShape.bezierCurveTo(25, 37, 20, 40, 0, 40);
+        heartShape.bezierCurveTo(-30, 40, -30, 8, -30, 8);
+        heartShape.bezierCurveTo(-30, -15, -10, -30, 25, -45);
+        heartShape.bezierCurveTo(60, -30, 80, -15, 80, 8);
+        heartShape.bezierCurveTo(80, 8, 80, 40, 50, 40);
+        heartShape.bezierCurveTo(35, 40, 25, 37, 25, 25);
+
+        const extrudeSettings = { depth: 6, bevelEnabled: true, bevelSegments: 3, steps: 2, bevelSize: 2, bevelThickness: 2 };
+        const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+        geometry.center();
+        geometry.scale(0.035, 0.035, 0.035);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffb6c1, 1.2);
+        dirLight.position.set(20, 40, 20);
+        scene.add(dirLight);
+
+        const heartsArray = [];
+        const materialsList = [
+            new THREE.MeshPhongMaterial({ color: 0xec4899, shininess: 80, specular: 0xffffff }),
+            new THREE.MeshPhongMaterial({ color: 0xef4444, shininess: 90, specular: 0xffffff })
+        ];
+
+        for (let i = 0; i < 22; i++) {
+            const mat = materialsList[Math.floor(Math.random() * materialsList.length)];
+            const mesh = new THREE.Mesh(geometry, mat);
+            mesh.position.set((Math.random() - 0.5) * 50, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 15);
+            mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+            mesh.userData = { speedY: 0.02 + Math.random() * 0.03, waveSeed: Math.random() * 100, rotSpeed: (Math.random() - 0.5) * 0.01 };
+            const scale = 0.5 + Math.random() * 0.6;
+            mesh.scale.set(scale, scale, scale);
+            scene.add(mesh);
+            heartsArray.push(mesh);
+        }
+
+        let clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+            heartsArray.forEach(heart => {
+                heart.position.y += heart.userData.speedY;
+                heart.position.x += Math.sin(time + heart.userData.waveSeed) * 0.012;
+                heart.rotation.y += heart.userData.rotSpeed;
+                if (heart.position.y > 22) {
+                    heart.position.y = -22;
+                    heart.position.x = (Math.random() - 0.5) * 50;
+                }
+            });
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
